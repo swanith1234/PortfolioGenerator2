@@ -22,19 +22,19 @@ app.use(cors({
   origin: "*", // or your frontend domain like "https://yourfrontend.vercel.app"
   credentials: true
 }));
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or Postman) or check if origin is in the allowed list
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true, // Enable cookies or authorization headers
-  })
-);
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       // Allow requests with no origin (like mobile apps or Postman) or check if origin is in the allowed list
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         callback(null, true);
+//       } else {
+//         callback(new Error("Not allowed by CORS"));
+//       }
+//     },
+//     credentials: true, // Enable cookies or authorization headers
+//   })
+// );
 
 app.use(cookieParser());
 app.use(express.json());
