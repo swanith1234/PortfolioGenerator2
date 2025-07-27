@@ -13,12 +13,15 @@ const port = process.env.PORT || 8000;
 const app = express();
 console.log("after app");
 // Middleware
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://portfolio-generator-xi.vercel.app",
-  "https://n8q8hzm1-5173.inc1.devtunnels.ms",
-];
-
+// const allowedOrigins = [
+//   "http://localhost:5173",
+//   "https://portfolio-generator-xi.vercel.app",
+//   "https://n8q8hzm1-5173.inc1.devtunnels.ms",
+// ];
+app.use(cors({
+  origin: "*", // or your frontend domain like "https://yourfrontend.vercel.app"
+  credentials: true
+}));
 app.use(
   cors({
     origin: (origin, callback) => {
