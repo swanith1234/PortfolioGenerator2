@@ -16,6 +16,7 @@ console.log("after app");
 const allowedOrigins = [
   "http://localhost:5173",
   "https://portfolio-generator-xi.vercel.app",
+  "https://n8q8hzm1-5173.inc1.devtunnels.ms",
 ];
 
 app.use(

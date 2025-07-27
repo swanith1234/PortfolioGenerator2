@@ -343,7 +343,11 @@ async function deployToVercel({ projectPath, accessToken }) {
     console.log("Generating Vercel configuration...");
     await createVercelConfig(projectPath);
 
-    // Step 2: Build the project
+    // Before building, install dependencies
+    console.log("Installing dependencies...");
+    await runVercelCommand("npm install", projectPath);
+
+    // Then build
     console.log("Building the project...");
     await runVercelCommand("npm run build", projectPath);
 
@@ -409,15 +413,15 @@ export async function deployPortfolio(projectPath, userName) {
 
   try {
     // Step 1: Create GitHub repository
-    const repoUrl = await createGitHubRepo({
-      repoName,
-      accessToken,
-      description: "This is my portfolio website",
-      isPrivate: false,
-    });
+    // const repoUrl = await createGitHubRepo({
+    //   repoName,
+    //   accessToken,
+    //   description: "This is my portfolio website",
+    //   isPrivate: false,
+    // });
 
     // Step 2: Push project files to the repository
-    pushToGitHub({ repoUrl, projectPath });
+    // pushToGitHub({ repoUrl, projectPath });
     // await enableGitHubPages({ repoName, accessToken });
     // Deploy the project to Vercel
     const deployedUrl = await deployToVercel({
@@ -427,9 +431,9 @@ export async function deployPortfolio(projectPath, userName) {
 
     console.log("Portfolio successfully deployed to Vercel at:", deployedUrl);
     console.log(`Your portfolio is live at: https://${repoName}.github.io`);
-    await deleteGeneratedFolder(projectPath);
+    // await deleteGeneratedFolder(projectPath);
     return {
-      repoUrl,
+      // repoUrl,
       deployedUrl,
     };
   } catch (error) {
