@@ -85,8 +85,6 @@ export const createUserInfo = async (req, res) => {
 
     console.log("Uploaded to Supabase at:", uploadedPath);
 
- 
-
     // Run the generated portfolio and retrieve the URL
     // const runURL = await runGeneratedPortfolio(templatePath, outputPath, 4000);
     // console.log("local server", runURL);
@@ -107,10 +105,10 @@ export const createUserInfo = async (req, res) => {
     console.log("Public Download Link:", publicUrl.publicUrl);
 
     console.log(`Generated portfolio is accessible at: ${deployedUrl}`);
-       // Delete local files to save space
+    // Delete local files to save space
     // await fs.remove(outputPath);
     await fs.remove(zipFilePath);
-    // await sendEmailSelect(emailId, name, deployedUrl, publicUrl.publicUrl);
+    await sendEmailSelect(emailId, name, deployedUrl, publicUrl.publicUrl);
     // Send a success response with the generated URL
     res.status(201).json({
       success: true,
