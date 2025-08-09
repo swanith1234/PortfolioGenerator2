@@ -225,12 +225,23 @@ function pushToGitHub({ repoUrl, projectPath, branch = "main" }) {
       remoteExists = false;
     }
 
+    // IMPORTANT: Insert your GitHub token here for authentication
+    const githubToken = process.env.GIT_ACCESS_TOKEN;
+    if (!githubToken) {
+      throw new Error("GIT_ACCESS_TOKEN environment variable is not set!");
+    }
+    // Embed token in repo URL for authenticated pushes
+    const repoUrlWithToken = repoUrl.replace(
+      /^https:\/\//,
+      `https://${githubToken}@`
+    );
+
     if (remoteExists) {
-      console.log("Updating remote repository URL...");
-      execSync(`git remote set-url origin ${repoUrl}`, { cwd: projectPath });
+      console.log("Updating remote repository URL with token...");
+      execSync(`git remote set-url origin ${repoUrlWithToken}`, { cwd: projectPath });
     } else {
-      console.log("Adding remote repository...");
-      execSync(`git remote add origin ${repoUrl}`, { cwd: projectPath });
+      console.log("Adding remote repository with token...");
+      execSync(`git remote add origin ${repoUrlWithToken}`, { cwd: projectPath });
     }
 
     // Configure git user for this repo locally (very important!)
@@ -240,7 +251,8 @@ function pushToGitHub({ repoUrl, projectPath, branch = "main" }) {
     // Ensure the correct branch name
     console.log(`Ensuring branch ${branch} exists...`);
     execSync(`git branch -M ${branch}`, { cwd: projectPath });
-  const largeFolders = ["dist", "public", "src"]; // Example of large folders
+
+    const largeFolders = ["dist", "public", "src"]; // Example of large folders
     const remainingFiles = "."; // All other files and folders
 
     // Commit each large folder individually
@@ -253,7 +265,12 @@ function pushToGitHub({ repoUrl, projectPath, branch = "main" }) {
       if (fs.existsSync(`${projectPath}/${folder}`)) {
         console.log(`Adding and committing folder: ${folder}...`);
         execSync(`git add ${folder}`, { cwd: projectPath });
-        execSync(`git commit -m "Add folder: ${folder}"`, { cwd: projectPath });
+        // Commit only if there are changes (optional optimization)
+        try {
+          execSync(`git commit -m "Add folder: ${folder}"`, { cwd: projectPath });
+        } catch (e) {
+          console.log(`No changes to commit in folder: ${folder}`);
+        }
       } else {
         console.log(`Folder ${folder} does not exist, skipping...`);
       }
@@ -262,16 +279,17 @@ function pushToGitHub({ repoUrl, projectPath, branch = "main" }) {
     // Commit the remaining files
     console.log("Adding and committing remaining files...");
     execSync(`git add ${remainingFiles}`, { cwd: projectPath });
-    execSync('git commit -m "Add remaining files"', { cwd: projectPath });
+    try {
+      execSync('git commit -m "Add remaining files"', { cwd: projectPath });
+    } catch (e) {
+      console.log("No changes to commit in remaining files");
+    }
 
     // Push all commits to the remote repository
     console.log(`Pushing code to branch: ${branch}...`);
     execSync(`git push -u origin ${branch}`, { cwd: projectPath });
 
     console.log("Code pushed successfully in steps!");
-  
-    // ... rest of your commits and push code
-
   } catch (error) {
     console.error("Error during deployment:", error.message);
   }
@@ -536,4 +554,5 @@ async function triggerVercelDeployment(projectName, projectId, vercelToken) {
   console.log("🚀 Deployment started:", data.url);
   return `https://${data.url}`;
 }
+
 
