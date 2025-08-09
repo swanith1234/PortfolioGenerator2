@@ -219,31 +219,28 @@ function pushToGitHub({ repoUrl, projectPath, branch = "main" }) {
 
     let remoteExists;
     try {
-      // Check if remote origin exists
       execSync("git remote get-url origin", { cwd: projectPath });
       remoteExists = true;
     } catch (error) {
-      remoteExists = false; // If an error occurs, the remote does not exist
+      remoteExists = false;
     }
 
     if (remoteExists) {
-      // Update remote URL if it exists
       console.log("Updating remote repository URL...");
       execSync(`git remote set-url origin ${repoUrl}`, { cwd: projectPath });
     } else {
-      // Add remote if it doesn't exist
       console.log("Adding remote repository...");
       execSync(`git remote add origin ${repoUrl}`, { cwd: projectPath });
     }
 
+    // Configure git user for this repo locally (very important!)
+    execSync('git config user.name "Swanith Kumar Reddy"', { cwd: projectPath });
+    execSync('git config user.email "swanithpidugu@gmail.com"', { cwd: projectPath });
+
     // Ensure the correct branch name
     console.log(`Ensuring branch ${branch} exists...`);
     execSync(`git branch -M ${branch}`, { cwd: projectPath });
-
-    // Step 2: Add node_modules to .gitignore if not already ignored
-
-    // Step 3: Divide the project into manageable chunks for commits
-    const largeFolders = ["dist", "public", "src"]; // Example of large folders
+  const largeFolders = ["dist", "public", "src"]; // Example of large folders
     const remainingFiles = "."; // All other files and folders
 
     // Commit each large folder individually
@@ -272,6 +269,9 @@ function pushToGitHub({ repoUrl, projectPath, branch = "main" }) {
     execSync(`git push -u origin ${branch}`, { cwd: projectPath });
 
     console.log("Code pushed successfully in steps!");
+  
+    // ... rest of your commits and push code
+
   } catch (error) {
     console.error("Error during deployment:", error.message);
   }
@@ -536,3 +536,4 @@ async function triggerVercelDeployment(projectName, projectId, vercelToken) {
   console.log("🚀 Deployment started:", data.url);
   return `https://${data.url}`;
 }
+
