@@ -371,7 +371,13 @@ async function deployToVercel({ projectPath, accessToken }) {
     throw error;
   }
 }
-
+function sanitizeProjectName(name) {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]/g, "-") // only allowed chars
+    .replace(/-{3,}/g, "-") // avoid triple dashes
+    .substring(0, 100); // max length
+}
 // Helper function to execute shell commands
 function runCommand(command) {
   return new Promise((resolve, reject) => {
@@ -406,42 +412,6 @@ function runVercelCommand(command, cwd) {
     });
   });
 }
-// Main function to create and deploy the repository
-export async function deployPortfolio(projectPath, userName) {
-  const repoName = userName; // Your desired repository name
-  const accessToken = process.env.GIT_ACCESS_TOKEN; // Replace with your GitHub PAT
-
-  try {
-    // Step 1: Create GitHub repository
-    // const repoUrl = await createGitHubRepo({
-    //   repoName,
-    //   accessToken,
-    //   description: "This is my portfolio website",
-    //   isPrivate: false,
-    // });
-
-    // Step 2: Push project files to the repository
-    // pushToGitHub({ repoUrl, projectPath });
-    // await enableGitHubPages({ repoName, accessToken });
-    // Deploy the project to Vercel
-    const deployedUrl = await deployToVercel({
-      projectPath,
-      accessToken: process.env.VERCEL_ACCESS_TOKEN,
-    });
-
-    console.log("Portfolio successfully deployed to Vercel at:", deployedUrl);
-    console.log(`Your portfolio is live at: https://${repoName}.github.io`);
-    // await deleteGeneratedFolder(projectPath);
-    return {
-      // repoUrl,
-      deployedUrl,
-    };
-  } catch (error) {
-    console.error("Deployment failed:", error.message);
-  }
-}
-
-// Run the script
 async function deleteGeneratedFolder(outputPath) {
   const maxRetries = 3;
   let attempts = 0;
@@ -467,4 +437,102 @@ async function deleteGeneratedFolder(outputPath) {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // 1-second retry delay
     }
   }
+}
+// Main function to create and deploy the repository
+export async function deployPortfolio(projectPath, userName) {
+  const repoName = sanitizeProjectName(userName);
+  const githubToken = process.env.GIT_ACCESS_TOKEN;
+  const vercelToken = process.env.VERCEL_ACCESS_TOKEN;
+  const githubUser = process.env.GITHUB_USERNAME; // Your GitHub username
+
+  try {
+    // 1️⃣ Create GitHub repository
+    const repoUrl = await createGitHubRepo({
+      repoName,
+      accessToken: githubToken,
+      description: "Portfolio website generated automatically",
+      isPrivate: false,
+    });
+
+    // 2️⃣ Push local project to GitHub
+    await pushToGitHub({ repoUrl, projectPath });
+
+    // 3️⃣ Create & link Vercel project with GitHub repo
+    const vercelProject = await linkRepoToVercel({
+      projectName: repoName,
+      githubRepo: `${githubUser}/${repoName}`,
+      vercelToken,
+    });
+    console.log("Vercel project linked successfully:", vercelProject);
+    // 4️⃣ Trigger a deployment
+    const deployedUrl = await triggerVercelDeployment(
+      repoName,
+      vercelProject.link.repoId,
+      vercelToken
+    );
+
+    console.log(`✅ Portfolio live at: ${deployedUrl}`);
+
+    return {
+      repoUrl,
+      deployedUrl,
+    };
+  } catch (error) {
+    console.error("❌ Deployment failed:", error.message);
+    throw error;
+  }
+}
+
+// Run the script
+
+async function linkRepoToVercel({ projectName, githubRepo, vercelToken }) {
+  const res = await fetch("https://api.vercel.com/v9/projects", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${vercelToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: projectName,
+      gitRepository: {
+        type: "github",
+        repo: githubRepo, // e.g. "username/my-portfolio"
+      },
+      buildCommand: "npm run build",
+      outputDirectory: "dist",
+    }),
+  });
+
+  if (!res.ok)
+    throw new Error(`Vercel project creation failed: ${await res.text()}`);
+
+  const data = await res.json();
+  console.log("✅ Linked to Vercel project:", data.id);
+  return data;
+}
+async function triggerVercelDeployment(projectName, projectId, vercelToken) {
+  console.log("Triggering Vercel deployment...", projectName, projectId);
+
+  const res = await fetch("https://api.vercel.com/v13/deployments", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${vercelToken}`,
+      "Content-Type": "application/json",
+    },
+
+    body: JSON.stringify({
+      name: projectName,
+      gitSource: {
+        type: "github",
+        repoId: projectId, // must match your linked repo
+        ref: "main", // or "master"
+      },
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Vercel deployment failed: ${await res.text()}`);
+
+  const data = await res.json();
+  console.log("🚀 Deployment started:", data.url);
+  return `https://${data.url}`;
 }

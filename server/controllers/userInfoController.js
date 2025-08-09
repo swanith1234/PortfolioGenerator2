@@ -110,7 +110,7 @@ export const createUserInfo = async (req, res) => {
        // Delete local files to save space
     // await fs.remove(outputPath);
     await fs.remove(zipFilePath);
-    await sendEmailSelect(emailId, name, deployedUrl, publicUrl.publicUrl);
+    // await sendEmailSelect(emailId, name, deployedUrl, publicUrl.publicUrl);
     // Send a success response with the generated URL
     res.status(201).json({
       success: true,

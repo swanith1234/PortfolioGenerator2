@@ -32,7 +32,7 @@ const sendEmailSelect = async (email, name, url, repoUrl) => {
       from: "swanithpidugu@gmail.com",
       to: email,
       subject: "Sending Email using Node.js",
-      text: `Congratulations ${name}, your portfolio is successfully deployed at ${url} and the link to the repo is ${repoUrl}`,
+      text: `Congratulations ${name}, your portfolio is successfully deployed at ${url} and you can download the zip file at ${repoUrl}All the best for your future endeavors!`,
     };
 
     const result = await transport.sendMail(mailOptions);
